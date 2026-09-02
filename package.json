@@ -1,0 +1,51 @@
+{
+  "name": "bbi-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bug Bounty Asset Intelligence Platform",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "worker": "node --conditions=react-server --import tsx scripts/worker.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "seed:providers": "node --conditions=react-server --import tsx scripts/seed-providers.ts",
+    "seed:demo": "node --conditions=react-server --import tsx scripts/seed-demo.ts",
+    "admin:create": "node --conditions=react-server --import tsx scripts/create-admin.ts",
+    "setup": "prisma migrate deploy && prisma generate && npm run seed:providers",
+    "seed:eval": "node --conditions=react-server --import tsx scripts/seed-evaluation-data.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "@prisma/adapter-better-sqlite3": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "next": "^16.3.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.3",
+    "playwright": "^1.62.1",
+    "postcss": "^8.5.26",
+    "prisma": "^7.10.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

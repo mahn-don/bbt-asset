@@ -1,0 +1,515 @@
+// Bug Bounty Asset Intelligence Platform - data model.
+//
+// SQLite is the local development datastore. Every enum is modelled as a
+// String column with an application-level enum (see src/lib/enums.ts) because
+// SQLite has no native enum type; the Postgres migration path is a straight
+// column-type change.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         String    @default("RESEARCHER") // ADMIN | RESEARCHER
+  disabled     Boolean   @default(false)
+
+  // UI preferences. The cookie is the fast path (no theme/locale flash on
+  // first paint); this column is the durable, cross-device store.
+  locale String @default("en")    // en | vi
+  theme  String @default("system") // light | dark | system
+
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions         Session[]
+  researchSessions ResearchSession[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ---------------------------------------------------------------------------
+// Providers
+// ---------------------------------------------------------------------------
+
+model Provider {
+  id        String   @id @default(cuid())
+  slug      String   @unique // HACKERONE | BUGCROWD | INTIGRITI | YESWEHACK | MANUAL
+  name      String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  integration  ProviderIntegration?
+  programs     Program[]
+  syncRuns     SyncRun[]
+  changeEvents ChangeEvent[]
+
+  @@map("providers")
+}
+
+model ProviderIntegration {
+  id         String @id @default(cuid())
+  providerId String @unique
+
+  enabled          Boolean @default(false)
+  connectionStatus String  @default("NOT_CONFIGURED")
+
+  // AES-256-GCM envelope produced by src/lib/crypto/credentials.ts.
+  // Never selected into any API response.
+  encryptedCredentials String?
+  credentialVersion    Int     @default(1)
+  credentialKeyId      String?
+  credentialHint       String? // non-reversible display hint, e.g. "user@example.com / ****"
+
+  lastTestedAt         DateTime?
+  lastSuccessfulSyncAt DateTime?
+  lastAttemptedSyncAt  DateTime?
+
+  lastErrorCode    String?
+  lastErrorSummary String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@map("provider_integrations")
+}
+
+// ---------------------------------------------------------------------------
+// Programs
+// ---------------------------------------------------------------------------
+
+model Program {
+  id         String @id @default(cuid())
+  providerId String
+  externalId String
+
+  handleOrSlug String
+  name         String
+  sourceUrl    String?
+
+  status     String @default("UNKNOWN") // ACTIVE | PAUSED | ARCHIVED | UNKNOWN
+  visibility String @default("UNKNOWN") // PUBLIC | PRIVATE | UNKNOWN
+
+  policy String?
+
+  bountyMin Float?
+  bountyMax Float?
+  currency  String?
+
+  safeHarbor String? // FULL | PARTIAL | NONE | UNKNOWN
+
+  sourceCreatedAt DateTime?
+  sourceUpdatedAt DateTime?
+
+  firstSeenAt  DateTime  @default(now())
+  lastSeenAt   DateTime  @default(now())
+  lastSyncedAt DateTime?
+
+  contentHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  scopes       Scope[]
+  changeEvents ChangeEvent[]
+
+  @@unique([providerId, externalId])
+  @@index([providerId, handleOrSlug])
+  @@index([status])
+  @@index([sourceUpdatedAt])
+  @@map("programs")
+}
+
+// ---------------------------------------------------------------------------
+// Scopes (assets)
+// ---------------------------------------------------------------------------
+
+model Scope {
+  id         String  @id @default(cuid())
+  programId  String
+  externalId String?
+
+  assetIdentifier String
+  assetType       String // DOMAIN | WILDCARD | URL | API | IP | CIDR | ANDROID | IOS | REPOSITORY | OTHER
+
+  scopeStatus String @default("IN_SCOPE") // IN_SCOPE | OUT_OF_SCOPE | REMOVED | UNKNOWN
+
+  eligibleForSubmission Boolean @default(false)
+  eligibleForBounty     Boolean @default(false)
+
+  maxSeverity String? // NONE | LOW | MEDIUM | HIGH | CRITICAL
+
+  instruction String?
+
+  // Provider-native values preserved verbatim for auditability (JSON string).
+  providerMetadata String?
+
+  sourceCreatedAt DateTime?
+  sourceUpdatedAt DateTime?
+
+  firstSeenAt DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  removedAt   DateTime?
+
+  reviewedAt DateTime?
+
+  contentHash String
+  version     Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  program          Program             @relation(fields: [programId], references: [id], onDelete: Cascade)
+  versions         ScopeVersion[]
+  changeEvents     ChangeEvent[]
+  aiEvaluations    ScopeAiEvaluation[]
+  researchSessions ResearchSession[]
+  findings         Finding[]
+
+  @@unique([programId, assetIdentifier, assetType])
+  @@index([programId, externalId])
+  @@index([scopeStatus])
+  @@index([assetType])
+  @@index([eligibleForBounty])
+  @@index([maxSeverity])
+  @@index([sourceUpdatedAt])
+  @@index([lastSeenAt])
+  @@map("scopes")
+}
+
+model ScopeVersion {
+  id      String @id @default(cuid())
+  scopeId String
+  version Int
+
+  canonicalSnapshot String // stable-serialised canonical scope (JSON string)
+  providerSnapshot  String? // raw provider payload (JSON string)
+
+  contentHash String
+
+  validFrom DateTime  @default(now())
+  validTo   DateTime?
+
+  createdAt DateTime @default(now())
+
+  scope Scope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+
+  @@unique([scopeId, version])
+  @@index([scopeId, validFrom])
+  @@map("scope_versions")
+}
+
+// ---------------------------------------------------------------------------
+// Change intelligence
+// ---------------------------------------------------------------------------
+
+model ChangeEvent {
+  id         String  @id @default(cuid())
+  providerId String
+  programId  String?
+  scopeId    String?
+
+  changeType String
+
+  fieldName String?
+  oldValue  String?
+  newValue  String?
+
+  detectedAt DateTime @default(now())
+
+  importance String @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL_ATTENTION
+
+  aiSummary  String?
+  aiAnalysed Boolean @default(false)
+  syncRunId  String?
+
+  createdAt DateTime @default(now())
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  program  Program? @relation(fields: [programId], references: [id], onDelete: Cascade)
+  scope    Scope?   @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  syncRun  SyncRun? @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
+
+  @@index([scopeId, detectedAt])
+  @@index([programId, detectedAt])
+  @@index([changeType, detectedAt])
+  @@index([providerId, detectedAt])
+  @@index([importance, detectedAt])
+  @@map("change_events")
+}
+
+// ---------------------------------------------------------------------------
+// Sync
+// ---------------------------------------------------------------------------
+
+model SyncRun {
+  id         String @id @default(cuid())
+  providerId String
+
+  triggerType String // MANUAL | SCHEDULED | INCREMENTAL
+  status      String // RUNNING | SUCCESS | PARTIAL | FAILED
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  cursorBefore String?
+  cursorAfter  String?
+
+  programsReceived Int @default(0)
+  programsCreated  Int @default(0)
+  programsUpdated  Int @default(0)
+
+  scopesReceived Int @default(0)
+  scopesCreated  Int @default(0)
+  scopesUpdated  Int @default(0)
+  scopesRemoved  Int @default(0)
+
+  changesDetected Int @default(0)
+  aiJobsEnqueued  Int @default(0)
+
+  rateLimitCount Int @default(0)
+  retryCount     Int @default(0)
+
+  errorCode    String?
+  errorSummary String?
+
+  metadata String? // JSON string
+
+  createdAt DateTime @default(now())
+
+  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  changeEvents ChangeEvent[]
+
+  @@index([providerId, startedAt])
+  @@index([status])
+  @@map("sync_runs")
+}
+
+// ---------------------------------------------------------------------------
+// AI
+// ---------------------------------------------------------------------------
+
+model ScopeAiEvaluation {
+  id      String @id @default(cuid())
+  scopeId String
+
+  status String // PENDING | PROCESSING | COMPLETED | FAILED | STALE
+
+  aiProvider    String
+  model         String
+  promptVersion String
+
+  // AI_MODEL means a real model produced this; HEURISTIC means the offline
+  // rule engine did. The UI must never present the two as the same thing.
+  evaluationSource String @default("HEURISTIC")
+
+  // Language the human-readable fields were written in.
+  language String @default("en")
+
+  inputHash String
+
+  businessValueScore     Int?
+  attackSurfaceScore     Int?
+  freshnessScore         Int?
+  researchPotentialScore Int?
+  complexityScore        Int?
+  policyFitScore         Int?
+  duplicateRiskScore     Int?
+
+  opportunityScore Int?
+  confidence       Float?
+
+  summary          String?
+  reasoningSummary String?
+
+  tags                   String? // JSON string array
+  suggestedResearchAreas String? // JSON string array
+  warnings               String? // JSON string array
+
+  errorCode    String?
+  errorSummary String?
+
+  latencyMs    Int?
+  inputTokens  Int?
+  outputTokens Int?
+
+  evaluatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scope Scope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+
+  @@index([scopeId, createdAt])
+  @@index([scopeId, status])
+  @@index([inputHash])
+  @@index([opportunityScore])
+  @@index([status])
+  @@map("scope_ai_evaluations")
+}
+
+// ---------------------------------------------------------------------------
+// AI configuration
+// ---------------------------------------------------------------------------
+
+/// Single-row configuration table (id is always "default").
+/// The API key is encrypted with the same AES-256-GCM envelope used for bug
+/// bounty provider credentials, and is never returned by any endpoint.
+model AiSettings {
+  id String @id @default("default")
+
+  provider String  @default("HEURISTIC") // ANTHROPIC | OPENAI | OPENAI_COMPATIBLE | HEURISTIC
+  model    String?
+  /// Only used by OPENAI_COMPATIBLE. Validated as an https origin server-side.
+  baseUrl  String?
+
+  encryptedApiKey   String?
+  credentialKeyId   String?
+  credentialVersion Int     @default(0)
+  credentialHint    String?
+
+  connectionStatus String    @default("NOT_CONFIGURED")
+  lastTestedAt     DateTime?
+  lastErrorCode    String?
+  lastErrorSummary String?
+
+  enabled                     Boolean @default(true)
+  scopeEvaluationEnabled      Boolean @default(true)
+  changeAnalysisEnabled       Boolean @default(true)
+  autoEvaluateNewScopes       Boolean @default(true)
+  autoReevaluateChangedScopes Boolean @default(true)
+  heuristicFallbackEnabled    Boolean @default(true)
+
+  temperature Float?
+  maxTokens   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ai_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Job queue (DB-backed; no external broker required)
+// ---------------------------------------------------------------------------
+
+model Job {
+  id   String @id @default(cuid())
+  type String // EVALUATE_SCOPE | ANALYZE_CHANGE | SUMMARIZE_POLICY
+
+  // Natural idempotency key: at most one live job per logical unit of work.
+  dedupeKey String @unique
+
+  payload String // JSON string
+  status  String @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
+
+  priority    Int @default(100)
+  attempts    Int @default(0)
+  maxAttempts Int @default(3)
+
+  availableAt DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  lockedBy String?
+  lockedAt DateTime?
+
+  errorCode    String?
+  errorSummary String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, availableAt, priority])
+  @@index([type, status])
+  @@map("jobs")
+}
+
+// ---------------------------------------------------------------------------
+// Research loop (foundation for the Asset -> Session -> Finding pipeline)
+// ---------------------------------------------------------------------------
+
+model ResearchSession {
+  id      String  @id @default(cuid())
+  scopeId String
+  userId  String?
+
+  title  String
+  status String  @default("PLANNED") // PLANNED | ACTIVE | COMPLETED | ABANDONED
+  notes  String?
+
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  durationMinutes Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scope    Scope     @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  findings Finding[]
+
+  @@index([scopeId, startedAt])
+  @@index([status])
+  @@map("research_sessions")
+}
+
+model Finding {
+  id                String  @id @default(cuid())
+  scopeId           String
+  researchSessionId String?
+
+  title    String
+  severity String? // NONE | LOW | MEDIUM | HIGH | CRITICAL
+  status   String  @default("DRAFT") // DRAFT | SUBMITTED | TRIAGED | ACCEPTED | DUPLICATE | INFORMATIVE | NOT_APPLICABLE | RESOLVED
+
+  submittedAt DateTime?
+  resolvedAt  DateTime?
+
+  payoutAmount   Float?
+  payoutCurrency String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scope           Scope            @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+  researchSession ResearchSession? @relation(fields: [researchSessionId], references: [id], onDelete: SetNull)
+
+  @@index([scopeId, createdAt])
+  @@index([status])
+  @@map("findings")
+}

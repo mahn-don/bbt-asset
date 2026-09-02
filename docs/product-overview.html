@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bug Bounty Asset Intelligence — Product Overview</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+
+  :root {
+    --ink: #10151f;
+    --ink-soft: #3f4a5c;
+    --ink-faint: #6b7688;
+    --line: #d7dde6;
+    --accent: #1d4ed8;
+    --accent-soft: #eaf0fe;
+    --ok: #046b4e;
+    --ok-soft: #e3f6ee;
+    --warn: #8a4b08;
+    --warn-soft: #fdf0dc;
+    --danger: #a3113a;
+    --danger-soft: #fde8ed;
+    --code-bg: #f4f6fa;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.55;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  p { margin: 0 0 8pt; }
+
+  code, .mono {
+    font-family: "Cascadia Mono", Consolas, "SF Mono", monospace;
+    font-size: 9pt;
+    background: var(--code-bg);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    height: 245mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+  }
+  .badge-brand {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-weight: 700;
+    font-size: 11pt;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+  }
+  .cover h1 { font-size: 30pt; line-height: 1.15; margin: 16pt 0 6pt; }
+  .cover .sub { font-size: 13pt; color: var(--ink-soft); margin-bottom: 22pt; }
+  .cover .meta { border-top: 1.5px solid var(--line); padding-top: 12pt; font-size: 9.5pt; color: var(--ink-soft); }
+  .cover .meta b { color: var(--ink); }
+
+  /* ---------- Structure ---------- */
+  .section { page-break-before: always; }
+  .section > h2 {
+    font-size: 17pt;
+    padding-bottom: 6pt;
+    border-bottom: 2.5px solid var(--accent);
+    margin-bottom: 12pt;
+  }
+
+  .uc { page-break-before: always; }
+  .uc-head {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 9pt 12pt;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 10pt;
+  }
+  .uc-id { font-size: 8.5pt; font-weight: 700; letter-spacing: 0.09em; color: var(--accent); text-transform: uppercase; }
+  .uc-head h3 { font-size: 14.5pt; margin-top: 2pt; }
+
+  .uc-grid {
+    display: grid;
+    grid-template-columns: 78pt 1fr;
+    gap: 3pt 10pt;
+    font-size: 9.4pt;
+    margin-bottom: 11pt;
+  }
+  .uc-grid dt { font-weight: 650; color: var(--ink-faint); text-transform: uppercase; font-size: 8.2pt; letter-spacing: 0.05em; padding-top: 1.5pt; }
+  .uc-grid dd { margin: 0; color: var(--ink-soft); }
+
+  ol.flow { margin: 0 0 10pt; padding-left: 16pt; font-size: 9.6pt; color: var(--ink-soft); }
+  ol.flow li { margin-bottom: 3pt; }
+  ol.flow b { color: var(--ink); font-weight: 600; }
+
+  h4.sub { font-size: 10.5pt; margin: 12pt 0 5pt; color: var(--ink); }
+
+  /* ---------- Figures ---------- */
+  figure { margin: 0 0 12pt; page-break-inside: avoid; }
+  figure img {
+    width: 100%;
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+  }
+  figcaption {
+    font-size: 8.4pt;
+    color: var(--ink-faint);
+    margin-top: 4pt;
+    line-height: 1.45;
+  }
+  figcaption b { color: var(--ink-soft); }
+
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+
+  /* ---------- Callouts ---------- */
+  .note {
+    border-radius: 5px;
+    padding: 8pt 11pt;
+    font-size: 9.3pt;
+    margin: 0 0 11pt;
+    border-left: 3px solid;
+  }
+  .note.ok { background: var(--ok-soft); border-color: var(--ok); color: #04563f; }
+  .note.warn { background: var(--warn-soft); border-color: var(--warn); color: #7a4207; }
+  .note.info { background: var(--accent-soft); border-color: var(--accent); color: #16307f; }
+  .note.danger { background: var(--danger-soft); border-color: var(--danger); color: #8d0f32; }
+  .note b { font-weight: 650; }
+
+  /* ---------- Tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 9.2pt; margin-bottom: 11pt; }
+  th {
+    text-align: left;
+    background: #eef2f7;
+    padding: 5pt 7pt;
+    border-bottom: 1.5px solid var(--line);
+    font-size: 8.3pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+  }
+  td { padding: 5pt 7pt; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink-soft); }
+  td.k { color: var(--ink); font-weight: 600; }
+  .yes { color: var(--ok); font-weight: 650; }
+  .no  { color: var(--ink-faint); }
+
+  .flowchart {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10pt 14pt;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 8.6pt;
+    line-height: 1.65;
+    white-space: pre;
+    color: var(--ink-soft);
+    margin-bottom: 12pt;
+  }
+
+  ul.tight { margin: 0 0 10pt; padding-left: 15pt; font-size: 9.6pt; color: var(--ink-soft); }
+  ul.tight li { margin-bottom: 2.5pt; }
+  ul.tight b { color: var(--ink); }
+
+  .toc { font-size: 10pt; }
+  .toc div { padding: 3.5pt 0; border-bottom: 1px dotted var(--line); display: flex; gap: 8pt; }
+  .toc span.n { font-family: "Cascadia Mono", Consolas, monospace; color: var(--accent); font-weight: 700; min-width: 46pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<div class="cover">
+  <div><span class="badge-brand">BBI</span></div>
+  <h1>Bug&nbsp;Bounty<br>Asset Intelligence</h1>
+  <div class="sub">A research operating system for authorized bug bounty work —<br>scope inventory, change detection and explainable prioritisation.</div>
+
+  <div class="meta">
+    <p><b>Document:</b> Product overview, presented as use cases</p>
+    <p><b>Build evaluated:</b> Next.js 16 · Prisma 7 / SQLite · 193 automated tests passing</p>
+    <p><b>Screenshots:</b> captured from a live running instance, not mock-ups</p>
+    <p style="margin-top:12pt"><b>Dataset note.</b> Every figure shows a synthetic dataset —
+      4 fictional programs on reserved <code>example.com</code> / <code>example.test</code>
+      domains, built by running the real synchronisation pipeline three times.
+      Credentials shown are placeholders. No real bug bounty program or credential appears
+      anywhere in this document.</p>
+    <p><b>Scope note.</b> This product is for <b>authorized</b> bug bounty research. It is an
+      inventory, change-detection and prioritisation system. It performs no scanning,
+      no exploitation and no active testing; the only hosts it contacts are the bug bounty
+      platform APIs themselves.</p>
+  </div>
+</div>
+
+<!-- ============================ CONTENTS ============================ -->
+<div class="section">
+  <h2>Contents</h2>
+  <div class="toc">
+    <div><span class="n">1</span><span>The problem, and the loop that solves it</span></div>
+    <div><span class="n">UC-01</span><span>Connect a bug bounty platform</span></div>
+    <div><span class="n">UC-02</span><span>Import programs and authorized scope</span></div>
+    <div><span class="n">UC-03</span><span>Decide what deserves attention today</span></div>
+    <div><span class="n">UC-04</span><span>Find the assets worth working on</span></div>
+    <div><span class="n">UC-05</span><span>Understand why an asset ranks where it does</span></div>
+    <div><span class="n">UC-06</span><span>Confirm research is actually authorized</span></div>
+    <div><span class="n">UC-07</span><span>Track what the provider changed</span></div>
+    <div><span class="n">UC-08</span><span>Audit an asset's full history</span></div>
+    <div><span class="n">UC-09</span><span>Configure the AI provider and key</span></div>
+    <div><span class="n">UC-10</span><span>Operate with no AI key at all</span></div>
+    <div><span class="n">UC-11</span><span>Work in Vietnamese, light or dark</span></div>
+    <div><span class="n">2</span><span>Safety guarantees enforced in code</span></div>
+    <div><span class="n">3</span><span>Feature matrix and current limitations</span></div>
+  </div>
+</div>
+
+<!-- ============================ 1. OVERVIEW ============================ -->
+<div class="section">
+  <h2>1 · The problem, and the loop that solves it</h2>
+
+  <p>A bug bounty researcher's scarcest resource is attention. Programs publish hundreds of
+  in-scope assets, quietly add and remove them, change severity ceilings and rewrite scope
+  instructions — and nobody sends a notification. The researcher who notices a new
+  bounty-eligible API three hours after it appears has an advantage that decays fast.</p>
+
+  <p>This product turns that scattered, perishable information into a private, accumulating
+  asset inventory with a memory.</p>
+
+  <div class="flowchart">Provider APIs  (HackerOne · Bugcrowd · Intigriti · YesWeHack · Manual)
+      ↓
+Provider adapters      →  normalization  →  canonical hash
+      ↓
+Program registry  →  Authorized scope inventory
+      ↓
+Scope versioning  →  Change detection
+      ↓
+AI prioritisation  →  Opportunity score
+      ↓
+Dashboard / Asset explorer  →  Human research
+      ↓
+Findings  →  duplicate / accepted / severity / payout
+      ↓
+ROI intelligence  →  better future prioritisation</div>
+
+  <h4 class="sub">Four principles the implementation actually enforces</h4>
+  <ul class="tight">
+    <li><b>Authorization comes from provider data, never from AI.</b> The safety gate reads
+      no model output at all, so nothing a model produces can move an asset into scope.</li>
+    <li><b>The application owns the score.</b> A model supplies seven dimension estimates;
+      the final Opportunity Score is a deterministic weighted sum computed in application code.</li>
+    <li><b>Rule-based output is never dressed up as AI.</b> Every evaluation records which
+      engine produced it, and the interface labels it.</li>
+    <li><b>Nothing is faked.</b> No fabricated metrics, no synthetic "connected" states, and
+      an unevaluated asset shows <code>—</code>, never a score of zero.</li>
+  </ul>
+
+  <figure>
+    <img src="./assets/02-dashboard.png" alt="Dashboard">
+    <figcaption><b>Figure 1.</b> The dashboard in dark mode. Every figure on the page is a real
+      aggregate over stored rows; cards for features holding no data yet are omitted rather
+      than shown as zero.</figcaption>
+  </figure>
+</div>
+
+<!-- ============================ UC-01 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-01</div>
+    <h3>Connect a bug bounty platform</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher (single-user install)</dd>
+    <dt>Goal</dt><dd>Give the platform read access to the programs they are a member of</dd>
+    <dt>Pre</dt><dd>An API token issued by the provider</dd>
+    <dt>Result</dt><dd>Credentials encrypted at rest; the true connection state is displayed</dd>
+  </dl>
+
+  <ol class="flow">
+    <li>Open <b>Settings → API Integrations</b>. Five providers are listed with their real state.</li>
+    <li>On a provider card, press <b>Configure</b>. The form is generated from that adapter's own
+      credential schema — HackerOne asks for an API username and token, YesWeHack for email,
+      password and an optional TOTP code.</li>
+    <li>Save. The value is encrypted with AES-256-GCM before it reaches the database.</li>
+    <li>Press <b>Test Connection</b>. A single minimal API call is made server-side.</li>
+  </ol>
+
+  <figure>
+    <img src="./assets/29-credential-form.png" alt="HackerOne credential form">
+    <figcaption><b>Figure 2.</b> The HackerOne integration card with its credential form open.
+      Note the stored credential is shown only as <span class="mono">API Token: ****0000</span> —
+      a non-reversible hint. The card reports <b>NOT CONFIGURED</b> because the credential has
+      not been verified yet, even though it is stored and the integration is enabled.</figcaption>
+  </figure>
+
+  <div class="note ok"><b>Credential security.</b> The API key is write-only by construction.
+    No endpoint and no page in the application returns it, the plaintext never reaches browser
+    JavaScript, structured logs redact it by field name, and a ciphertext is bound to its
+    provider so a row copied between providers fails to decrypt rather than silently
+    authenticating against the wrong service.</div>
+
+  <figure>
+    <img src="./assets/26-integrations.png" alt="Integrations page">
+    <figcaption><b>Figure 3.</b> All five providers on one page. Connection states are honest and
+      distinct: <b>NOT&nbsp;CONFIGURED</b>, <b>AUTH&nbsp;ERROR</b>, <b>PERMISSION&nbsp;ERROR</b>,
+      <b>RATE&nbsp;LIMITED</b>, <b>API&nbsp;ERROR</b>, <b>DISABLED</b>. A success state is never
+      synthesised.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/30-manual-card.png" alt="Manual provider card">
+    <figcaption><b>Figure 4.</b> The Manual provider reports <b>READY</b>, never CONNECTED — there
+      is no remote API to connect to. CONNECTED is reserved for real integrations, so the badge
+      keeps its meaning.</figcaption>
+  </figure>
+</div>
+
+<!-- ============================ UC-02 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-02</div>
+    <h3>Import programs and authorized scope</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher</dd>
+    <dt>Goal</dt><dd>Pull every program and in-scope asset into a local inventory</dd>
+    <dt>Pre</dt><dd>A configured, enabled integration</dd>
+    <dt>Result</dt><dd>Normalized programs and scopes, version 1 snapshots, an audited sync run</dd>
+  </dl>
+
+  <ol class="flow">
+    <li>Press <b>Sync Now</b>. The adapter paginates the provider API with bounded retries,
+      exponential backoff with jitter, and <span class="mono">Retry-After</span> support.</li>
+    <li>Each record is normalized: provider-native asset types collapse onto one vocabulary
+      (<span class="mono">DOMAIN · WILDCARD · URL · API · IP · CIDR · ANDROID · IOS · REPOSITORY · OTHER</span>),
+      and identifiers are canonicalised so the same asset never lands twice.</li>
+    <li>A SHA-256 content hash is taken over the meaningful fields only. Provider timestamps and
+      raw payloads are deliberately excluded.</li>
+    <li>Records are upserted, a scope version is written, and differences become change events.</li>
+  </ol>
+
+  <figure>
+    <img src="./assets/21-programs.png" alt="Programs">
+    <figcaption><b>Figure 5.</b> Programs imported from two providers plus one manual entry, with
+      total and active scope counts, bounty ceiling and last sync time.</figcaption>
+  </figure>
+
+  <div class="note info"><b>Idempotency is the load-bearing property.</b> Re-running an identical
+    sync creates no duplicate program or scope, no new version, no false change event and no
+    duplicate AI job — only <span class="mono">lastSeenAt</span> moves. This is what makes an
+    hourly schedule safe, and it is covered by dedicated tests.</div>
+
+  <figure>
+    <img src="./assets/31-sync-history.png" alt="Sync history">
+    <figcaption><b>Figure 6.</b> Sync history per provider. Each run records status
+      (SUCCESS / PARTIAL / FAILED / RUNNING), trigger, duration and full counters — programs and
+      scopes received, created, updated, removed, changes detected, AI jobs queued, rate-limit
+      events and retries. One failing program does not fail the provider run; it ends
+      <b>PARTIAL</b> with the error recorded.</figcaption>
+  </figure>
+</div>
+
+<!-- ============================ UC-03 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-03</div>
+    <h3>Decide what deserves attention today</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher, at the start of a session</dd>
+    <dt>Goal</dt><dd>Answer "what changed, and what should I look at first?" in under a minute</dd>
+    <dt>Result</dt><dd>A ranked shortlist and a feed of what the providers changed</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/03-metrics.png" alt="Dashboard metrics">
+    <figcaption><b>Figure 7.</b> Headline counters, all real aggregates: programs, active scopes,
+      assets first seen in the last seven days, changes detected today, assets scoring 80+, and
+      the AI queue depth. Findings and payout cards appear only once that data exists.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/04-opportunities.png" alt="Today's opportunities">
+    <figcaption><b>Figure 8.</b> <b>Today's Opportunities</b> — active authorized scope ranked by
+      Opportunity Score, with band, asset type, NEW / CHANGED / BOUNTY markers, provider
+      provenance and AI tags.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/05-recent-changes.png" alt="Recent changes">
+    <figcaption><b>Figure 9.</b> The recent-change feed. <b>CRITICAL ATTENTION</b> denotes
+      research-review priority — explicitly not vulnerability severity, a distinction the
+      interface repeats wherever the term appears.</figcaption>
+  </figure>
+</div>
+
+<!-- ============================ UC-04 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-04</div>
+    <h3>Find the assets worth working on</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher with a hypothesis ("new bounty-eligible APIs")</dd>
+    <dt>Goal</dt><dd>Narrow thousands of assets to a working set</dd>
+    <dt>Result</dt><dd>A filtered, sorted, shareable view</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/06-assets.png" alt="Assets explorer">
+    <figcaption><b>Figure 10.</b> The asset explorer. Columns are weighted so the values a
+      researcher scans for — score, asset, program, status, bounty, severity — carry more visual
+      weight than supporting metadata.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/07-filters.png" alt="Asset filters">
+    <figcaption><b>Figure 11.</b> Filters: free-text search, provider, program, asset type, scope
+      status, maximum severity, bounty eligibility, AI tag, score range, and toggles for new,
+      recently changed, not evaluated and not reviewed. Sorting covers opportunity, newest,
+      recently changed, highest severity and least reviewed.</figcaption>
+  </figure>
+
+  <div class="note ok"><b>Every filter lives in the URL.</b> The whole page is a plain GET form,
+    so any view can be bookmarked or shared, works without JavaScript, and is validated by the
+    same schema the JSON API uses.</div>
+
+  <figure>
+    <img src="./assets/09-assets-filtered.png" alt="Filtered assets">
+    <figcaption><b>Figure 12.</b> Filtered to bounty-eligible assets scoring 85 or above.</figcaption>
+  </figure>
+
+  <div class="note warn"><b>"Not evaluated" is not zero.</b> An asset with no completed evaluation
+    renders as <span class="mono">—</span> with an explicit status, and always sorts last. Showing
+    it as 0 would silently push genuinely unknown assets to the bottom of the list as though they
+    had been assessed and found worthless.</div>
+</div>
+
+<!-- ============================ UC-05 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-05</div>
+    <h3>Understand why an asset ranks where it does</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher deciding whether to commit hours to a target</dd>
+    <dt>Goal</dt><dd>See the reasoning, not just a number</dd>
+    <dt>Result</dt><dd>A dimension-by-dimension breakdown with declared provenance</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/14-ai-panel.png" alt="AI evaluation panel">
+    <figcaption><b>Figure 13.</b> The evaluation panel. Provenance is stated first:
+      <b>Evaluation Source</b>, the engine, and — for a real model — the exact model id. The score
+      is decomposed into seven weighted dimensions, and the panel states plainly that the final
+      score is computed by the application, never taken from the model.</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>Dimension</th><th style="width:52pt">Weight</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Business Value</td><td>20%</td><td>How important the authorized asset may be to the target's business</td></tr>
+      <tr><td class="k">Attack Surface</td><td>20%</td><td>Functional surface area implied by metadata — <i>not</i> likelihood of exploitation</td></tr>
+      <tr><td class="k">Freshness</td><td>20%</td><td>Recently added or recently changed scope</td></tr>
+      <tr><td class="k">Research Potential</td><td>15%</td><td>Interest for manual authorized research</td></tr>
+      <tr><td class="k">Complexity</td><td>10%</td><td>System complexity — <i>not</i> ease of hacking</td></tr>
+      <tr><td class="k">Policy Fit</td><td>10%</td><td>How clearly the program permits useful research</td></tr>
+      <tr><td class="k">Duplicate Risk</td><td>5%</td><td>Saturation estimate; inverted inside the formula only</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note info"><b>Duplicate Risk reads the way you expect.</b> It is displayed as stored —
+    0 means low risk, 100 means high risk. The inversion happens once, inside the scoring formula.
+    The label never says "inverted", which would invite the reader to invert it a second time.</div>
+
+  <div class="note warn"><b>Honest limitation.</b> Duplicate risk is estimated only from signals
+    this installation actually holds — asset age and the researcher's own recorded coverage.
+    The product has no global bug bounty duplicate statistics and does not pretend to.</div>
+</div>
+
+<!-- ============================ UC-06 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-06</div>
+    <h3>Confirm research is actually authorized</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher about to begin work</dd>
+    <dt>Goal</dt><dd>Be certain the target is in scope and the permission is current</dd>
+    <dt>Result</dt><dd>An explicit allow or deny with every failing reason listed</dd>
+  </dl>
+
+  <p>Two questions that look similar are kept strictly apart, because conflating them is how
+  people end up testing something they should not:</p>
+
+  <ul class="tight">
+    <li><b>Scope Classification</b> — what the provider says: IN SCOPE, OUT OF SCOPE, REMOVED, UNKNOWN.</li>
+    <li><b>Research Authorization</b> — what this system's safety gate concluded: VERIFIED,
+      USER CONFIRMED, NOT VERIFIED.</li>
+  </ul>
+
+  <figure>
+    <img src="./assets/11-asset-facts.png" alt="Asset header facts">
+    <figcaption><b>Figure 14.</b> The two are shown side by side and never merged. An asset can be
+      classified IN SCOPE by the provider while our gate still declines it — because the
+      integration is disabled, the data has gone stale, or a manual entry was never confirmed.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/12-authorization.png" alt="Authorization verified">
+    <figcaption><b>Figure 15.</b> A provider-backed asset that passes every check:
+      <b>VERIFIED</b>.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/18-manual-authorization.png" alt="Authorization not verified">
+    <figcaption><b>Figure 16.</b> A hand-entered asset. It is classified IN SCOPE, but authorization
+      is <b>NOT VERIFIED</b> and the exact reason is given. Manual scope requires explicit human
+      confirmation before the gate will allow it.</figcaption>
+  </figure>
+
+  <div class="note danger"><b>The gate defaults to deny</b> and refuses on any of: scope removed,
+    out of scope, ambiguous status, submission not eligible, program inactive, provider
+    integration disabled, no provider snapshot, data older than the configured freshness limit, or
+    unconfirmed manual entry. <b>It reads no AI output whatsoever</b> — a model cannot move an
+    asset from OUT&nbsp;OF&nbsp;SCOPE or UNKNOWN into IN&nbsp;SCOPE. A test seeds a maximally
+    confident evaluation on an out-of-scope asset and asserts the gate still denies it.</div>
+</div>
+
+<!-- ============================ UC-07 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-07</div>
+    <h3>Track what the provider changed</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher returning after a few days</dd>
+    <dt>Goal</dt><dd>See every meaningful change since last time</dd>
+    <dt>Result</dt><dd>A typed, before/after change feed</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/19-changes.png" alt="Changes page">
+    <figcaption><b>Figure 17.</b> The change feed, filterable by type and importance. Nine typed
+      events are detected: asset added, asset removed, asset changed, bounty eligibility changed,
+      submission eligibility changed, max severity changed, instruction changed, policy changed,
+      program changed.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/20-change-detail.png" alt="Change with before and after">
+    <figcaption><b>Figure 18.</b> Each change carries explicit before and after values — here a
+      scope instruction rewritten by the program.</figcaption>
+  </figure>
+
+  <div class="note ok"><b>Signal, not noise.</b> Content hashing deliberately excludes provider
+    timestamps and raw payloads, so a bumped <span class="mono">updated_at</span> with unchanged
+    content produces no event. A scope that disappears is never deleted: it becomes
+    <b>REMOVED</b>, keeps its full version history, emits <span class="mono">ASSET_REMOVED</span>,
+    and immediately begins failing the authorization gate.</div>
+</div>
+
+<!-- ============================ UC-08 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-08</div>
+    <h3>Audit an asset's full history</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher writing a report, or re-checking a decision</dd>
+    <dt>Goal</dt><dd>Reconstruct what the provider said, and when</dd>
+    <dt>Result</dt><dd>Immutable version history, change history and evaluation history</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/13-provider-data.png" alt="Provider data panel">
+    <figcaption><b>Figure 19.</b> Provider data exactly as received: program status, visibility,
+      safe harbour, bounty range, when the source last changed, when we first and last saw it,
+      when the program last synced, and whether the record is provider-verified or manual.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/16-scope-history.png" alt="Scope version history">
+    <figcaption><b>Figure 20.</b> Every meaningful change writes a new immutable version with
+      validity dates and a content hash. Superseded versions are closed off, never overwritten.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/17-eval-history.png" alt="AI evaluation history">
+    <figcaption><b>Figure 21.</b> Evaluation history retains every assessment with its status,
+      source, score, confidence, language and engine — so a superseded evaluation stays auditable
+      rather than disappearing.</figcaption>
+  </figure>
+</div>
+
+<!-- ============================ UC-09 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-09</div>
+    <h3>Configure the AI provider and key</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher with an Anthropic or OpenAI key</dd>
+    <dt>Goal</dt><dd>Switch on model-backed evaluation without redeploying</dd>
+    <dt>Result</dt><dd>Encrypted key, selected model, verified connection</dd>
+  </dl>
+
+  <figure>
+    <img src="./assets/23-settings-nav.png" alt="Settings navigation" style="width:46%">
+    <figcaption><b>Figure 22.</b> Settings are grouped rather than piled onto one page.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/24-ai-provider-config.png" alt="AI provider configuration">
+    <figcaption><b>Figure 23.</b> Provider, API key and model. Supported today: <b>Anthropic</b>,
+      <b>OpenAI</b>, any <b>OpenAI-compatible endpoint</b> (validated HTTPS origin, private and
+      link-local addresses refused), and the offline rule engine. Each provider offers a model
+      list plus a <b>Custom model ID</b> field, so a model released after this build can still be
+      selected.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/25-ai-features.png" alt="AI feature toggles">
+    <figcaption><b>Figure 24.</b> Independent switches for scope evaluation, change analysis,
+      automatic evaluation of new and changed scope, and heuristic fallback. Temperature and max
+      tokens sit under <b>Advanced</b>, collapsed by default.</figcaption>
+  </figure>
+
+  <div class="note ok"><b>Test Connection is a genuine probe.</b> It issues a single one-token
+    request server-side — never a full scope evaluation — and reports the real outcome:
+    Connected, Invalid API key, Permission denied, Rate limited, Provider unavailable, or
+    Configuration incomplete. It explicitly refuses to fall back to the rule engine, so it can
+    never report a success that says nothing about the configured provider.</div>
+
+  <div class="note info"><b>Cost control.</b> Each evaluation is keyed by a hash of its canonical
+    input. If nothing evaluation-relevant changed, the existing result is reused with no model
+    call. Age values are bucketed so the hash does not drift daily, and an evaluation's own output
+    tags are excluded from its hash — otherwise completing an evaluation would invalidate itself
+    and every asset would pay for a second call.</div>
+</div>
+
+<!-- ============================ UC-10 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-10</div>
+    <h3>Operate with no AI key at all</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Researcher evaluating the product, or working offline</dd>
+    <dt>Goal</dt><dd>Use the whole system without paying for a model</dd>
+    <dt>Result</dt><dd>Full functionality, with the reduced confidence stated everywhere</dd>
+  </dl>
+
+  <p>With no key configured the platform scores every asset with a deterministic offline rule
+  engine. Nothing is disabled. What changes is that the product says so — repeatedly, in every
+  place the number appears.</p>
+
+  <figure>
+    <img src="./assets/22-settings-ai.png" alt="AI settings with heuristic active">
+    <figcaption><b>Figure 25.</b> The banner states it directly: <i>"AI model evaluation is
+      disabled. The application is currently using heuristic/rule-based scoring."</i></figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/27-ai-summary.png" alt="AI intelligence summary">
+    <figcaption><b>Figure 26.</b> The same fact on the integrations page — provider reported as
+      <b>Heuristic fallback</b> with a direct route to configure a real model.</figcaption>
+  </figure>
+
+  <div class="note danger"><b>Rule-based output is never presented as AI.</b> The evaluation is
+    stored with its true source, badged <b>HEURISTIC</b> against a real model's <b>AI MODEL</b>,
+    attributed to "Offline rule engine", and carries the warning <i>"Rule-based estimate: produced
+    by the offline rule engine, not by an AI model."</i> If a configured model becomes unavailable
+    and the fallback engages, the resulting evaluation is labelled HEURISTIC — the switch is never
+    silent.</div>
+</div>
+
+<!-- ============================ UC-11 ============================ -->
+<div class="uc">
+  <div class="uc-head">
+    <div class="uc-id">Use case UC-11</div>
+    <h3>Work in Vietnamese, light or dark</h3>
+  </div>
+
+  <dl class="uc-grid">
+    <dt>Actor</dt><dd>Vietnamese-speaking researcher</dd>
+    <dt>Goal</dt><dd>Use the product in their own language and preferred theme</dd>
+    <dt>Result</dt><dd>Preference stored per account, applied with no flash of the wrong theme</dd>
+  </dl>
+
+  <div class="two-up">
+    <figure>
+      <img src="./assets/32-appearance.png" alt="Appearance settings">
+      <figcaption><b>Figure 27.</b> Light, Dark or System.</figcaption>
+    </figure>
+    <figure>
+      <img src="./assets/33-language.png" alt="Language settings">
+      <figcaption><b>Figure 28.</b> English or Tiếng Việt.</figcaption>
+    </figure>
+  </div>
+
+  <figure>
+    <img src="./assets/36-dashboard-vi.png" alt="Vietnamese dashboard">
+    <figcaption><b>Figure 29.</b> The dashboard in Vietnamese — <i>Tổng quan</i>,
+      <i>Cơ hội hôm nay</i>, <i>Phạm vi đang hoạt động</i>. Roughly 340 strings are translated;
+      the English dictionary is the typed source of truth, so a missing translation is a compile
+      error rather than a blank label.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/38-ai-panel-vi.png" alt="Vietnamese AI panel">
+    <figcaption><b>Figure 30.</b> AI output follows the interface language. Technical identifiers —
+      domain names, asset types, severities, provider names, protocol names — stay verbatim in
+      every language, because translating them would make them harder to match against the
+      provider's own dashboard.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="./assets/34-dashboard-light.png" alt="Light theme">
+    <figcaption><b>Figure 31.</b> The same dashboard in light mode. Both themes are built from one
+      set of semantic design tokens, so components carry no theme-specific colour. Measured
+      contrast is 5.2:1 for the faintest supporting text and 8.8:1 for secondary text — both pass
+      WCAG AA.</figcaption>
+  </figure>
+
+  <div class="two-up">
+    <figure>
+      <img src="./assets/37-assets-vi.png" alt="Vietnamese asset explorer">
+      <figcaption><b>Figure 32.</b> The asset explorer in Vietnamese. Technical identifiers,
+        asset types and provider names stay in their original form.</figcaption>
+    </figure>
+    <figure>
+      <img src="./assets/40-mobile-assets.png" alt="Mobile asset explorer">
+      <figcaption><b>Figure 33.</b> The same screen at 390&nbsp;px. Filters stack, and the table
+        scrolls horizontally inside its own container rather than forcing the page to.</figcaption>
+    </figure>
+  </div>
+
+  <div class="note info"><b>Existing evaluations are not re-run when the language changes.</b>
+    Language is part of an evaluation's cache identity and is stored on the record. Switching the
+    interface to Vietnamese therefore costs nothing: earlier results keep displaying in the
+    language they were written in, with an inline offer to re-evaluate. Silently regenerating
+    every historical evaluation would produce a large, unrequested model bill.</div>
+</div>
+
+<!-- ============================ 2. SAFETY ============================ -->
+<div class="section">
+  <h2>2 · Safety guarantees enforced in code</h2>
+
+  <p>These are not policies in a document; each is enforced at a specific place in the codebase
+  and covered by tests.</p>
+
+  <table>
+    <thead><tr><th style="width:34%">Guarantee</th><th>How it is enforced</th></tr></thead>
+    <tbody>
+      <tr><td class="k">AI cannot grant authorization</td>
+          <td>The safety gate queries provider data only. No evaluation is read. A test seeds a
+              maximum-confidence evaluation on an out-of-scope asset and asserts it is still denied.</td></tr>
+      <tr><td class="k">AI cannot set the score</td>
+          <td>The model returns seven dimensions; the score is a deterministic weighted sum in
+              application code. Out-of-range and non-finite model output is clamped, not trusted.</td></tr>
+      <tr><td class="k">No exploitation capability</td>
+          <td>The system contacts bug bounty platform APIs only. Research suggestions stay at
+              planning level ("review the tenant isolation model"), never technique level.</td></tr>
+      <tr><td class="k">Secrets never leave the server</td>
+          <td>AES-256-GCM at rest with versioned keys; the master key lives in the environment,
+              never the database. No endpoint returns key material; logs redact by field name.</td></tr>
+      <tr><td class="k">Prompt injection is contained</td>
+          <td>Provider policy and scope instructions are third-party text, passed to the model
+              inside explicit untrusted-data delimiters. Even a successful injection cannot grant
+              authorization or change a score — both are computed outside the model.</td></tr>
+      <tr><td class="k">No SSRF primitive</td>
+          <td>Provider base URLs are server-controlled constants. The one user-supplied URL
+              (custom AI endpoint) must be an HTTPS origin and private, loopback and link-local
+              addresses are rejected. Redirects are never followed.</td></tr>
+      <tr><td class="k">History is never destroyed</td>
+          <td>Removed scope is marked REMOVED with its versions retained. Superseded evaluations
+              become STALE rather than being deleted.</td></tr>
+    </tbody>
+  </table>
+
+  <h4 class="sub">Verification status of this build</h4>
+  <table>
+    <thead><tr><th>Check</th><th style="width:30%">Result</th></tr></thead>
+    <tbody>
+      <tr><td class="k">TypeScript (strict)</td><td class="yes">clean</td></tr>
+      <tr><td class="k">ESLint</td><td class="yes">clean</td></tr>
+      <tr><td class="k">Automated tests</td><td class="yes">193 passing / 12 files</td></tr>
+      <tr><td class="k">Production build</td><td class="yes">succeeds</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================ 3. MATRIX ============================ -->
+<div class="section">
+  <h2>3 · Feature matrix and current limitations</h2>
+
+  <table>
+    <thead><tr><th style="width:44%">Capability</th><th style="width:16%">State</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td class="k">HackerOne integration</td><td class="yes">Implemented</td><td>Documented Hacker API; verified end to end in tests</td></tr>
+      <tr><td class="k">Bugcrowd · Intigriti · YesWeHack</td><td>Implemented, unverified</td><td>Written against published docs; not exercised against a live account</td></tr>
+      <tr><td class="k">Manual provider</td><td>API only</td><td>Records work fully; no UI yet for entering them</td></tr>
+      <tr><td class="k">Scope inventory, versioning, change detection</td><td class="yes">Implemented</td><td>Idempotent; covered by tests</td></tr>
+      <tr><td class="k">Opportunity scoring</td><td class="yes">Implemented</td><td>Deterministic; exact arithmetic asserted</td></tr>
+      <tr><td class="k">Authorization safety gate</td><td class="yes">Implemented</td><td>Default deny; independent of AI</td></tr>
+      <tr><td class="k">Anthropic / OpenAI / compatible endpoints</td><td class="yes">Implemented</td><td>Structured output, schema-validated twice</td></tr>
+      <tr><td class="k">Heuristic offline engine</td><td class="yes">Implemented</td><td>Deterministic; always labelled</td></tr>
+      <tr><td class="k">Light / dark / system theme</td><td class="yes">Implemented</td><td>Semantic tokens; no flash on load</td></tr>
+      <tr><td class="k">English / Vietnamese</td><td class="yes">Implemented</td><td>~340 strings; type-checked for completeness</td></tr>
+      <tr><td class="k">Sync health &amp; freshness states</td><td class="no">Not built</td><td>Run history exists; no HEALTHY/STALE summary</td></tr>
+      <tr><td class="k">Saved views</td><td class="no">Not built</td><td>Filters are URL-shareable in the meantime</td></tr>
+      <tr><td class="k">Watchlist &amp; notifications</td><td class="no">Not built</td><td></td></tr>
+      <tr><td class="k">Global search (Cmd/Ctrl-K)</td><td class="no">Not built</td><td>Per-page search exists</td></tr>
+      <tr><td class="k">Research workspace</td><td class="no">Data model only</td><td>Sessions and findings are stored; no UI</td></tr>
+      <tr><td class="k">AI usage &amp; cost tracking</td><td class="no">Not built</td><td>Reuse-vs-call is enforced but not reported</td></tr>
+    </tbody>
+  </table>
+
+  <h4 class="sub">Known weaknesses, stated plainly</h4>
+  <ul class="tight">
+    <li><b>The rule engine does not discriminate well.</b> On the dataset shown, the top ten assets
+      all score 84–93 and all band HIGH. When everything is a high opportunity, the ranking carries
+      little information. A real model produces better spread, but the offline engine's range
+      should be widened.</li>
+    <li><b>Opportunity summaries are repetitive.</b> The rule engine composes from templates, so
+      consecutive entries read almost identically. The dashboard list should be condensed and the
+      full explanation left to the detail page.</li>
+    <li><b>Two dead ends in the interface.</b> Confirming a manual asset as authorized, and
+      creating manual programs and scopes, both work through the API but have no UI control.</li>
+    <li><b>No sync-health signal on the dashboard.</b> Freshness is visible per asset, but there is
+      no at-a-glance answer to "is my data current?"</li>
+    <li><b>Scale.</b> The asset list reduces its candidate set in memory. It is comfortable at the
+      current dataset size and will need cursor pagination before tens of thousands of scopes.</li>
+  </ul>
+
+  <div class="note info"><b>Priorities.</b> The three gaps that most affect daily use are sync
+    health, saved views and a watchlist. Independently of that, widening the rule engine's score
+    distribution and condensing the dashboard rows are cheap changes that would improve the product
+    more than any single new feature.</div>
+</div>
+
+</body>
+</html>

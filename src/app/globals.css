@@ -1,0 +1,301 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   Design tokens
+   ---------------------------------------------------------------------------
+   Two complete palettes — genuinely light and genuinely dark, no gray hybrid.
+
+   Tokens are *semantic* (`--surface`, `--ink-soft`), never raw colour names,
+   so components never hard-code a colour. `@theme inline` maps each token to a
+   Tailwind utility that resolves the variable at runtime, which is what lets
+   the theme switch without a rebuild: `bg-surface`, `text-ink-soft`,
+   `border-line`, and so on.
+
+   Layering contract, both themes:
+       canvas  →  surface  →  elevated
+   each step is visibly distinct, and `line` is always visible against
+   `surface`. Inputs use `field`, which contrasts with `surface` rather than
+   blending into it.
+   =========================================================================== */
+
+/* --- Light (default) ----------------------------------------------------- */
+:root {
+  --canvas: #f5f7fa;
+  --surface: #ffffff;
+  --elevated: #ffffff;
+  --sunken: #eef2f7;
+
+  --line: #d5dce6;
+  --line-strong: #b3bece;
+
+  --ink: #0c1320;
+  --ink-soft: #4a5568;
+  --ink-faint: #6b7688;
+
+  --accent: #1d4ed8;
+  --accent-hover: #1a43ba;
+  --accent-soft: #e6edfd;
+  --accent-ink: #1a44b8;
+  --accent-contrast: #ffffff;
+
+  --success: #047857;
+  --success-soft: #e0f5ec;
+  --success-ink: #04624a;
+
+  --warning: #b45309;
+  --warning-soft: #fbeedd;
+  --warning-ink: #91430a;
+
+  --danger: #be123c;
+  --danger-soft: #fce7ec;
+  --danger-ink: #9d0f33;
+
+  --info: #0369a1;
+  --info-soft: #e0f2fe;
+  --info-ink: #075985;
+
+  --neutral-soft: #eef2f7;
+  --neutral-ink: #55617a;
+
+  --field: #ffffff;
+  --field-border: #c3ccda;
+  --row-hover: #f2f6fb;
+  --header-bg: #ffffff;
+  --sidebar-active: #e6edfd;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-raised: 0 4px 12px rgb(16 24 40 / 0.1);
+
+  color-scheme: light;
+}
+
+/* --- Dark ---------------------------------------------------------------- */
+[data-theme="dark"] {
+  --canvas: #080b10;
+  --surface: #0f141c;
+  --elevated: #151b25;
+  --sunken: #0b0f16;
+
+  --line: #263041;
+  --line-strong: #3a4761;
+
+  --ink: #f4f7fb;
+  --ink-soft: #a8b2c1;
+  --ink-faint: #7d8899;
+
+  --accent: #4d8dff;
+  --accent-hover: #6ba0ff;
+  --accent-soft: #14264a;
+  --accent-ink: #9dc2ff;
+  --accent-contrast: #04101f;
+
+  --success: #34d399;
+  --success-soft: #0a3125;
+  --success-ink: #6ee7b7;
+
+  --warning: #f5b544;
+  --warning-soft: #382a0c;
+  --warning-ink: #fcd34d;
+
+  --danger: #f87171;
+  --danger-soft: #3a1418;
+  --danger-ink: #fca5a5;
+
+  --info: #38bdf8;
+  --info-soft: #0a2c3d;
+  --info-ink: #7dd3fc;
+
+  --neutral-soft: #1c2431;
+  --neutral-ink: #9aa6b8;
+
+  --field: #0a0e15;
+  --field-border: #334056;
+  --row-hover: #151b25;
+  --header-bg: #0b0f16;
+  --sidebar-active: #14264a;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 8px 24px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+/* --- Tailwind utility mapping -------------------------------------------- */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-sunken: var(--sunken);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ink: var(--warning-ink);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+
+  --color-neutral-soft: var(--neutral-soft);
+  --color-neutral-ink: var(--neutral-ink);
+
+  --color-field: var(--field);
+  --color-field-border: var(--field-border);
+  --color-row-hover: var(--row-hover);
+  --color-header-bg: var(--header-bg);
+  --color-sidebar-active: var(--sidebar-active);
+
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas,
+    monospace;
+}
+
+/* ===========================================================================
+   Base
+   =========================================================================== */
+
+html {
+  background-color: var(--canvas);
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  /* Base size raised from 14px: the previous UI was uncomfortably small. */
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* An obvious focus ring on every interactive element, in both themes. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background-color: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* ===========================================================================
+   Typography scale
+   ---------------------------------------------------------------------------
+   A real hierarchy, so not everything is the same weight and colour.
+   =========================================================================== */
+
+.type-page-title {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.type-section-title {
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.type-card-title {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Primary data: the values people scan a table for. */
+.type-data {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Secondary metadata: readable, deliberately not dim. */
+.type-meta {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* Helper text. The lightest tone used anywhere; still contrast-checked. */
+.type-help {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* Small caps label above a value. */
+.type-label {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ===========================================================================
+   Scrollbars
+   =========================================================================== */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--line-strong);
+  border-radius: 5px;
+  border: 2px solid var(--canvas);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ===========================================================================
+   Reduced motion
+   =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
